@@ -33,6 +33,10 @@ class Driver(object):
 class FileChangedDriver(Driver):
 
     def version(self, stream):
+        if not os.path.exists(stream):
+            # convert to relative
+            stream = stream[1:]
+
         path = stream
         if os.path.isabs(path):
             pass
