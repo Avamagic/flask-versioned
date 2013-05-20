@@ -11,6 +11,8 @@
 import os
 import time
 
+from flask import current_app
+
 
 __all__ = ['Driver', 'FileChangedDriver', 'Versioned']
 
@@ -21,8 +23,7 @@ class VersionedError(Exception):
 
 
 class Driver(object):
-    def __init__(self, app, format='/version-%(version)s/%(path)s'):
-        self.app = app
+    def __init__(self, format='/version-%(version)s/%(path)s'):
         self.format = format
 
     def version(self, stream):
@@ -36,7 +37,7 @@ class FileChangedDriver(Driver):
         if os.path.isabs(path):
             pass
         else:
-            path = os.path.join(self.app.root_path, path)
+            path = os.path.join(current_app.root_path, path)
 
         if not os.path.isfile(path):
             raise VersionedError("no such file: %s" % path)
@@ -51,9 +52,15 @@ class FileChangedDriver(Driver):
 
 class Versioned(object):
 
-    def __init__(self, app, driver_cls=FileChangedDriver, **driver_options):
-        self._driver = driver_cls(app, **driver_options)
-        app.jinja_env.filters.setdefault('versioned', self)
+    def __init__(self, app=None, driver_cls=FileChangedDriver, **driver_options):
+        self._driver_cls = driver_cls
+        self._driver_options = driver_options
+        if app is not None:
+            self.init_app(app)
 
     def __call__(self, stream):
         return self._driver.version(stream)
+
+    def init_app(self, app):
+        self._driver = self._driver_cls(**self._driver_options)
+        app.jinja_env.filters.setdefault('versioned', self)
