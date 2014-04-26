@@ -34,10 +34,12 @@ class FileChangedDriver(Driver):
 
     def version(self, stream):
         if not os.path.exists(stream):
+            path = stream.replace(self.app.static_url_path, self.app.static_folder, 1)
             # convert to relative
             stream = stream[1:]
+        else:
+            path = stream
 
-        path = stream
         if os.path.isabs(path):
             pass
         else:
